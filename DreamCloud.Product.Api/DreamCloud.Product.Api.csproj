@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DreamCloud.Product.Common.Infrastructure\DreamCloud.Product.Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\DreamCloud.Product.Models\DreamCloud.Product.Models.csproj" />
+    <ProjectReference Include="..\DreamCloud.Product.Services.Sql\DreamCloud.Product.Services.Sql.csproj" />
+  </ItemGroup>
+
+</Project>
