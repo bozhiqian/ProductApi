@@ -18,7 +18,7 @@ namespace DreamCloud.Product.Api.Controllers
     /// Product Api
     /// </summary>
     [ApiController]
-    [Route("[controller]")]
+    [Route("[controller]s")]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;

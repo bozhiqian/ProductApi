@@ -1,3 +1,4 @@
+using System.Linq;
 using DreamCloud.Product.Data.DbContext;
 using DreamCloud.Product.Models.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
@@ -8,6 +9,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using DreamCloud.Product.Services.Sql.DependencyInjection;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
 namespace DreamCloud.Product.Api
@@ -26,9 +29,22 @@ namespace DreamCloud.Product.Api
         {
             var productSqlDbConnectionString = Configuration.GetConnectionString("ProductSqlDbConnectionString");
 
+            services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
+
             services.AddControllers()
                 .AddFluentValidation(fv => fv.ImplicitlyValidateChildProperties = true); // https://fluentvalidation.net/
 
+            var allowedHosts = Configuration.GetSection("ApplicationOptions:AllowedHosts").Get<string[]>();
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                    builder => builder
+                        .WithOrigins(allowedHosts)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials());
+            });
+            
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "DreamCloud.Product.Api", Version = "v1" });
@@ -52,11 +68,23 @@ namespace DreamCloud.Product.Api
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DreamCloud.Product.Api v1"));
             }
+            else
+            {
+                app.UseExceptionHandler(appBuilder =>
+                {
+                    // Todo... Logging.
+
+                    appBuilder.Run(async context =>
+                    {
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
+                    });
+                });
+            }
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
+            app.UseCors("CorsPolicy"); // Apply the policy globally to every request in the application
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
