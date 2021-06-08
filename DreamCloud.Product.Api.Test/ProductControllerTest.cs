@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DreamCloud.Product.Api.Controllers;
 using DreamCloud.Product.Models.Client;
@@ -82,6 +83,35 @@ namespace DreamCloud.Product.Api.Test
 
             Assert.NotNull(product);
             Assert.Equal("Product4", product.Name);
+        }
+
+        [Fact]
+        public async Task Add_product_failed_without_name()
+        {
+            _mockProductService.Setup(s => s.AddProductAsync(It.IsAny<Product.Data.Entities.Product>())).Returns(Task.FromResult(new Product.Data.Entities.Product()
+            {
+                Name = "Product5",
+                Description = "Product5 Description",
+                Price = .99m
+            }));
+
+            _productController = new ProductController(_mockProductService.Object, new NullLogger<ProductController>(), _validator);
+
+            var productToAdd = new ProductToAdd()
+            {
+                Description = "Product5 Description",
+                Price = .99m
+            };
+
+            var result = await _productController.AddProductAsync(productToAdd);
+            var actionResult = (ObjectResult)result.Result;
+
+            Assert.IsType<ValidationProblemDetails>(actionResult.Value);
+            var error = actionResult.Value as ValidationProblemDetails;
+
+            Assert.NotNull(error);
+            Assert.True(error.Errors.Any());
+            Assert.Equal("Name", error.Errors.First().Key);
         }
 
         private List<Product.Data.Entities.Product> ProductsTestData()
