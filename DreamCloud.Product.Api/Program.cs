@@ -34,7 +34,7 @@ namespace DreamCloud.Product.Api
 
                     if (_configuration != null && _configuration["ApplicationOptions:SeedProducts"].ToLower() == "true")
                     {
-                        var c = await seedData.SeedPartnersAsync(context);
+                        var c = await seedData.SeedProductsAsync(context);
                         logger.LogInformation($"Total products {c} has been imported into product table.");
                     }
                 }

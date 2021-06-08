@@ -7,7 +7,7 @@ namespace DreamCloud.Product.Services.Sql.DependencyInjection
 {
     public static class AddSqlServiceCollectionExtensions
     {
-        public static IServiceCollection AddAzureSqlDatabaseServices(this IServiceCollection services, string partnerSqlDbConnectionString)
+        public static IServiceCollection AddAzureSqlDatabaseServices(this IServiceCollection services)
         {
             services.AddScoped<IProductService>(s => new ProductService(s.GetRequiredService<ProductContext>(), s.GetRequiredService<ILogger<ProductService>>()));
             services.AddSingleton<ISeedData>(s => new SeedData(s.GetRequiredService<ILogger<SeedData>>()));

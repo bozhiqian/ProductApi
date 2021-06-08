@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DreamCloud.Product.Data.DbContext;
@@ -9,7 +10,7 @@ namespace DreamCloud.Product.Services.Sql.Services
 {
     public interface IProductService
     {
-        Task<List<Data.Entities.Product>> GetProducts();
+        Task<List<Data.Entities.Product>> GetProductsAsync();
         Data.Entities.Product GetProduct(int id);
 
         Task<Data.Entities.Product> AddProductAsync(Data.Entities.Product product);
@@ -26,23 +27,25 @@ namespace DreamCloud.Product.Services.Sql.Services
             _logger = logger;
         }
 
-        public async Task<List<Data.Entities.Product>> GetProducts()
+        public virtual async Task<List<Data.Entities.Product>> GetProductsAsync()
         {
             var products = await _context.Products.ToListAsync();
 
             return products;
         }
 
-        public Data.Entities.Product GetProduct(int id)
+        public virtual Data.Entities.Product GetProduct(int id)
         {
             var product = _context.Products.FirstOrDefault(p => p.Id == id);
 
             return product;
         }
 
-        public async Task<Data.Entities.Product> AddProductAsync(Data.Entities.Product product)
+        public virtual async Task<Data.Entities.Product> AddProductAsync(Data.Entities.Product product)
         {
-            _context.Products.Add(product);
+            _ = product ?? throw new ArgumentNullException(nameof(product), "A product is required");
+
+           _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
             return product;

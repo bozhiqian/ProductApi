@@ -5,7 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DreamCloud.Product.Common.Infrastructure.Services;
+using DreamCloud.Product.Models.Client;
 using DreamCloud.Product.Services.Sql.Services;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 
 namespace DreamCloud.Product.Api.Controllers
@@ -14,17 +18,18 @@ namespace DreamCloud.Product.Api.Controllers
     /// Product Api
     /// </summary>
     [ApiController]
-    [Route("[controller]s")]
-    //[ApiExplorerSettings(GroupName = "Product Catalog")]
+    [Route("[controller]")]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
         private readonly ILogger<ProductController> _logger;
+        private readonly IValidator<ProductToAdd> _validator;
 
-        public ProductController(IProductService productService, ILogger<ProductController> logger)
+        public ProductController(IProductService productService, ILogger<ProductController> logger, IValidator<ProductToAdd> validator)
         {
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
             _logger = logger;
+            _validator = validator;
         }
 
         /// <summary>
@@ -38,7 +43,7 @@ namespace DreamCloud.Product.Api.Controllers
         {
             try
             {
-                var products = await _productService.GetProducts();
+                var products = await _productService.GetProductsAsync();
                 if (products == null || !products.Any())
                     return NotFound();
 
@@ -106,19 +111,40 @@ namespace DreamCloud.Product.Api.Controllers
         /// <param name="product"></param>
         /// <returns></returns>
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ServiceErrorInformation), StatusCodes.Status404NotFound)]
 
-        public async Task<ActionResult<Models.Client.Product>> AddProduct(Models.Client.Product product)
+        public async Task<ActionResult<Models.Client.Product>> AddProductAsync(Models.Client.ProductToAdd product)
         {
             try
             {
-                var newProductEntity = new Data.Entities.Product()
-                { Name = product.Name, Description = product.Description, Price = product.Price };
+                // Validate product model.
+                var validationResult = await _validator.ValidateAsync(product);
+                if (!validationResult.IsValid)
+                {
+                    var validationFailures = new List<ValidationFailure>();
+
+                    foreach (var failure in validationResult.Errors)
+                    {
+                        validationFailures.Add(new ValidationFailure(failure.PropertyName, failure.ErrorMessage));
+                    }
+
+                    return ThrowModelValidationError(validationFailures);
+                }
+
+                var newProductEntity = new Product.Data.Entities.Product()
+                { Name = product.Name, Description = product.Description, Price = product.Price }; // Todo... Use AutoMapper.
 
                 var newProduct = await _productService.AddProductAsync(newProductEntity);
 
-                return CreatedAtAction("GetProduct", new { id = newProduct.Id }, newProduct);
+                return CreatedAtAction("GetProduct", new { id = newProduct.Id }, new Models.Client.Product()
+                {
+                    ProductId = newProduct.Id,
+                    Name = newProduct.Name,
+                    Description = newProduct.Description,
+                    Price = newProduct.Price
+                }); // Todo... Use AutoMapper.
             }
             catch (Exception ex)
             {
@@ -130,5 +156,23 @@ namespace DreamCloud.Product.Api.Controllers
                 }); //Caution: never return error details to client in production. Logging should be used.
             }
         }
+
+        #region Validations
+
+        protected ActionResult ThrowModelValidationError(List<ValidationFailure> validationFailures)
+        {
+            var validationResult = GetModelValidationError(validationFailures);
+
+            return ValidationProblem(ModelState);
+        }
+
+        protected ValidationResult GetModelValidationError(List<ValidationFailure> validationFailures)
+        {
+            var validationResult = new ValidationResult(validationFailures);
+            validationResult.AddToModelState(ModelState, null);
+
+            return validationResult;
+        }
+        #endregion
     }
 }

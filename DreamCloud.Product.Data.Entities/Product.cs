@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 
 namespace DreamCloud.Product.Data.Entities
@@ -8,7 +9,7 @@ namespace DreamCloud.Product.Data.Entities
     /// </summary>
     public class Product : IdentityEntityBase<int>
     {
-        
+        [Required]
         public string Name { get; set; }
         public string Description { get; set; }
 

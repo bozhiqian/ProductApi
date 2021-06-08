@@ -11,7 +11,7 @@ namespace DreamCloud.Product.Services.Sql.Services
 {
     public interface ISeedData
     {
-        Task<int> SeedPartnersAsync(ProductContext context);
+        Task<int> SeedProductsAsync(ProductContext context);
     }
 
     public class SeedData : ISeedData
@@ -23,7 +23,7 @@ namespace DreamCloud.Product.Services.Sql.Services
             _logger = logger;
         }
 
-        public async Task<int> SeedPartnersAsync(ProductContext context)
+        public async Task<int> SeedProductsAsync(ProductContext context)
         {
             if (context.Products.Any())
             {
@@ -32,7 +32,7 @@ namespace DreamCloud.Product.Services.Sql.Services
 
             try
             {
-                var partners = new List<Data.Entities.Product>
+                var products = new List<Data.Entities.Product>
                 {
                     new Data.Entities.Product()
                     {
@@ -54,7 +54,7 @@ namespace DreamCloud.Product.Services.Sql.Services
                     }
                 };
 
-                context.Products.AddOrUpdate(partners);
+                context.Products.AddOrUpdate(products);
 
                 var count = await context.SaveChangesAsync();
                 return count;

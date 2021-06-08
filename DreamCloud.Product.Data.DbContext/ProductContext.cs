@@ -38,7 +38,7 @@ namespace DreamCloud.Product.Data.DbContext
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {
-            foreach (var entry in ChangeTracker.Entries<IdentityEntityBase<int>>()) // Todo... for rest of other IdentityEntityBase<T>.
+            foreach (var entry in ChangeTracker.Entries<IdentityEntityBase<int>>()) 
             {
                 var entity = entry.Entity;
                 var utcNow = DateTime.UtcNow;

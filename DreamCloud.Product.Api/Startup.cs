@@ -1,4 +1,5 @@
 using DreamCloud.Product.Data.DbContext;
+using DreamCloud.Product.Models.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using DreamCloud.Product.Services.Sql.DependencyInjection;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace DreamCloud.Product.Api
@@ -24,22 +26,21 @@ namespace DreamCloud.Product.Api
         {
             var productSqlDbConnectionString = Configuration.GetConnectionString("ProductSqlDbConnectionString");
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddFluentValidation(fv => fv.ImplicitlyValidateChildProperties = true); // https://fluentvalidation.net/
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "DreamCloud.Product.Api", Version = "v1" });
             });
-
-            //services.AddDbContext<ProductContext>(opt => opt.UseInMemoryDatabase("ProductDb")); // Hardcode inmemory database name for demo only.
-            //services.AddScoped<ProductContext>();
 
             services.AddDbContext<ProductContext>(opt =>
                     opt.UseSqlServer(productSqlDbConnectionString)
                         .EnableSensitiveDataLogging()
             );
 
-            services.AddAzureSqlDatabaseServices(productSqlDbConnectionString);
-
+            services.AddAzureSqlDatabaseServices();
+            services.ApplyModelValidators();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
