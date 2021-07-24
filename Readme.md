@@ -14,6 +14,7 @@ Product Model
 Stack
 - ASP.NET Core
 - Entity Framework Core
+
 Not required
 - Authentication
 - Persistence
